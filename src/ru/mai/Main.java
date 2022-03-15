@@ -15,19 +15,24 @@ public class Main {
                 InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
                 BufferedReader fileReader = new BufferedReader(inputStreamReader)
         ) {
-            Lexer lexer = new Lexer();
-            Token token;
+//            Lexer lexer = new Lexer();
+//            Token token;
+//
+//            while (fileReader.ready()) {
+//                token = lexer.getNextToken(fileReader);
+//                if (token != null) {
+//                    System.out.println("Token: " + token.getNameToken());
+//                    System.out.println("Lexeme: " + token.getLexeme());
+//                    System.out.println("-".repeat(30));
+//                }
+//            }
+            Analyzer analyzer = new Analyzer(fileReader);
+            analyzer.analyse();
 
-            while (fileReader.ready()) {
-                token = lexer.getNextToken(fileReader);
-                if (token != null) {
-                    System.out.println("Token: " + token.getNameToken());
-                    System.out.println("Lexeme: " + token.getLexeme());
-                    System.out.println("-".repeat(30));
-                }
-            }
         } catch (IOException e) {
             System.err.println("Error" + e);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

@@ -16,4 +16,12 @@ public class Token {
     public String getNameToken() {
         return nameToken;
     }
+
+    @Override
+    public String toString() {
+        return "Token{" +
+                "nameToken='" + nameToken + '\'' +
+                ", lexeme='" + lexeme + '\'' +
+                '}';
+    }
 }
