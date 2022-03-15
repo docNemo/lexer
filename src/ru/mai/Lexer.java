@@ -13,7 +13,6 @@ public class Lexer {
     public Lexer() {
         tokenStates = createStateNameToken();
         acceptingState = createSetAcceptingState();
-
     }
 
     public Token getNextToken(BufferedReader reader) throws IOException {
