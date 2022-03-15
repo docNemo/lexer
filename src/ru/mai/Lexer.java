@@ -3,17 +3,16 @@ package ru.mai;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 public class Lexer {
-    Set receivingState;
+    Set<Integer> acceptingState;
     Map<Integer, String> tokenStates;
 
     public Lexer() {
-        receivingState = createSetReceivingState();
         tokenStates = createStateNameToken();
+        acceptingState = createSetAcceptingState();
 
     }
 
@@ -27,7 +26,7 @@ public class Lexer {
         char currentChar = 0;
 
         for (int pos = 0; state >= 0; pos++) {
-            if (isReceivingState(state)) {
+            if (isAcceptingState(state)) {
                 lastAccepting = state;
                 lastPos = pos;
 
@@ -42,15 +41,24 @@ public class Lexer {
                     readLexeme(reader, lastPos)
             );
         } else if (currentChar == ' ' || currentChar == '\n') {
-            return null;
+            skipSpaces(reader);
+            return getNextToken(reader);
+        } else if (currentChar == (char) -1) {
+            return new Token("eof", "");
         } else {
             throw new RuntimeException("Bad lexeme");
         }
     }
 
+    private void skipSpaces(BufferedReader reader) throws IOException {
+        do {
+            reader.mark(1);
+        } while (((char) reader.read()) == ' ');
+        reader.reset();
+    }
 
-    private boolean isReceivingState(int state) {
-        return receivingState.contains(state);
+    private boolean isAcceptingState(int state) {
+        return acceptingState.contains(state);
     }
 
     private String getTokenNameForState(int state) {
@@ -70,17 +78,8 @@ public class Lexer {
         return tokenStates;
     }
 
-    private Set<Integer> createSetReceivingState() {
-        Set<Integer> receivingState = new HashSet<>();
-        receivingState.add(1);
-        receivingState.add(2);
-        receivingState.add(5);
-        receivingState.add(6);
-        receivingState.add(7);
-        receivingState.add(8);
-        receivingState.add(9);
-        receivingState.add(10);
-        return receivingState;
+    private Set<Integer> createSetAcceptingState() {
+        return tokenStates.keySet();
     }
 
     private String readLexeme(BufferedReader reader, int numChars) throws IOException {
@@ -92,9 +91,8 @@ public class Lexer {
         return lexeme.toString();
     }
 
-
     private int dfaTransitions(int state, char character) {
-        int nextState = switch (state) {
+        return switch (state) {
             case 0 -> {
                 if (character >= 'a' && character <= 'z' || character == '_') {
                     yield 7;
@@ -108,7 +106,6 @@ public class Lexer {
                         character == '+'
                                 || character == '*'
                                 || character == '/'
-                                || character == '^'
                                 || character == '^'
                                 || character == '-'
                 ) {
@@ -164,7 +161,6 @@ public class Lexer {
             }
             default -> -1;
         };
-        return nextState;
 
     }
 
