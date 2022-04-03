@@ -5,8 +5,8 @@ import java.io.IOException;
 
 public class Analyzer {
     private Token token;
-    private Lexer lexer;
-    private BufferedReader reader;
+    private final Lexer lexer;
+    private final BufferedReader reader;
 
     public Analyzer(BufferedReader reader) throws IOException {
         this.lexer = new Lexer();
@@ -14,13 +14,14 @@ public class Analyzer {
         this.token = lexer.getNextToken(reader);
     }
 
-    public void analyse() throws Exception {
-        S();
+    public Node analyse() throws Exception {
+        return S();
     }
 
-    private void S() throws Exception {
-        E();
+    private Node S() throws Exception {
+        Node node = E();
         EOF();
+        return node;
     }
 
     private void EOF() throws Exception {
@@ -29,80 +30,107 @@ public class Analyzer {
         }
     }
 
-    public void E() throws Exception {
-        T(); E_();
+    public Node E() throws Exception {
+        Node node1 = T();
+        Node node2 = E_();
+        if (node2 != null && node2.getToken().getNameToken().equals("operator")) {
+            node2.setLeft(node1);
+            node1 = node2;
+        }
+        return node1;
     }
 
-    private void E_() throws Exception {
+    private Node E_() throws Exception {
+        Node node;
         switch (token.getLexeme()) {
             case "+" -> {
+                node = new Node(token);
                 nextChar("+");
-                T(); E_();
+                node.setRight(E());
             }
             case "-" -> {
+                node = new Node(token);
                 nextChar("-");
-                T(); E_();
+                node.setRight(E());
             }
-            default -> {
-            }
+            default -> node = null;
         }
+        return node;
     }
 
-    private void T() throws Exception {
-        F(); T_();
+    private Node T() throws Exception {
+        Node node1 = F();
+        Node node2 = T_();
+        if (node2 != null && node2.getToken().getNameToken().equals("operator")) {
+            node2.setLeft(node1);
+            node1 = node2;
+        }
+        return node1;
     }
 
-    private void T_() throws Exception {
+    private Node T_() throws Exception {
+        Node node;
         switch (token.getLexeme()) {
             case "*" -> {
+                node = new Node(token);
                 nextChar("*");
-                F(); T_();
+                node.setRight(T());
             }
             case "/" -> {
+                node = new Node(token);
                 nextChar("/");
-                F(); T_();
+                node.setRight(T());
             }
-            default -> {
-            }
+            default -> node = null;
         }
+        return node;
     }
 
-    private void F() throws Exception {
-        V(); F_();
-    }
-
-    private void F_() throws Exception {
-        switch (token.getLexeme()) {
-            case "^" -> {
-                nextChar("^");
-                F();
-            }
-            default -> {
-            }
+    private Node F() throws Exception {
+        Node node1 = V();
+        Node node2 = F_();
+        if (node2 != null && node2.getToken().getNameToken().equals("operator")) {
+            node2.setLeft(node1);
+            node1 = node2;
         }
+        return node1;
     }
 
-    private void V() throws Exception {
+    private Node F_() throws Exception {
+        if (!"^".equals(token.getLexeme())) {
+            return null;
+        }
+        Token currToken = token;
+        nextChar("^");
+        return new Node(currToken, null, F());
+    }
+
+    private Node V() throws Exception {
+        Node node;
         switch (token.getNameToken()) {
             case "lparen" -> {
                 nextChar("(");
-                E();
+                node = E();
                 nextChar(")");
             }
-            case "id" -> {
+            case "id", "number" -> {
+                node = new Node(token);
                 nextChar(token.getLexeme());
             }
-            case "number" -> nextChar(token.getLexeme());
-            case "operator" -> nextChar("-");
+            case "operator" -> {
+                node = new Node(token);
+                nextChar("-");
+                node.setLeft(V());
+            }
             default -> throw new Exception("Unexpected terminal: " + token.toString());
         }
+        return node;
     }
 
     private void nextChar(String currChar) throws Exception {
         if (token.getLexeme().equals(currChar)) {
             token = lexer.getNextToken(reader);
-        }
-        else {
+        } else {
             throw new Exception("Unexpected " + token.toString());
         }
     }
